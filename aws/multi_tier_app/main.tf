@@ -108,6 +108,15 @@ variable "centos7_amis" {
   }
 }
 
+data "template_file" "init" {
+  template = "${file("${path.module}/init.yml.tpl")}"
+
+  vars {
+    postgres_endpoint = "${module.db.this_db_instance_endpoint}"
+  }
+}
+
+
 resource "aws_instance" "app" {
   count         = "1"
   instance_type = "t2.micro"
@@ -118,7 +127,7 @@ resource "aws_instance" "app" {
 
   #ami = "${var.centos7_amis[var.region]}"
 
-  user_data = "${file("app.yml")}"
+  user_data = "${data.template_file.init.rendered}"
   # The name of our SSH keypair we created above.
   key_name                    = "${aws_key_pair.exercise.id}"
   associate_public_ip_address = "true"
@@ -168,4 +177,8 @@ resource "aws_elb" "web" {
 
 output "lb.web.dns_name" {
   value = "${aws_elb.web.dns_name}"
+}
+
+output "app.web.dns_name" {
+  value = "${aws_instance.app.public_dns}"
 }
