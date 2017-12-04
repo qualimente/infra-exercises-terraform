@@ -164,3 +164,8 @@ resource "aws_elb" "web" {
     interval            = 15
   }
 }
+
+
+output "lb.web.dns_name" {
+  value = "${aws_elb.web.dns_name}"
+}
