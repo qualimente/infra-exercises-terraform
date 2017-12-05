@@ -57,12 +57,20 @@ func main() {
 	}
 
 	http.HandleFunc("/", serveIndex)
+	http.HandleFunc("/counter", serveCounter)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func serveIndex(resp http.ResponseWriter, req *http.Request) {
+	resp.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	fmt.Fprintln(resp, "Welcome!")
+
+}
+
+func serveCounter(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
 	fmt.Fprintln(resp, "DB_ADDR:", os.Getenv("POSTGRES_HOST"))
