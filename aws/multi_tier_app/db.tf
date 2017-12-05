@@ -51,7 +51,7 @@ module "db" {
   # user cannot be used as it is a reserved word used by the engine"
   username = "exercise"
 
-  password = "YourPwdShouldBeLongAndSecure!"
+  password = "mypass27"
   port     = "5432"
 
   vpc_security_group_ids = ["${aws_security_group.db.id}"]
