@@ -112,6 +112,7 @@ data "template_file" "init" {
   template = "${file("${path.module}/init.yml.tpl")}"
 
   vars {
+    postgres_address = "${module.db.this_db_instance_address}"
     postgres_endpoint = "${module.db.this_db_instance_endpoint}"
   }
 }
