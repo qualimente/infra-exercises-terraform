@@ -35,7 +35,10 @@ Export environment variables for:
 
 Create an empty main.tf file.
 
-Run `terraform plan`
+Run:
+
+`terraform init`
+`terraform plan`
 
 Expected Result: 
 Terraform should initialize plugins and report zero resource additions, modifications, and deletions
@@ -91,7 +94,7 @@ Add to config.tf:
 ```
 terraform {
   backend "s3" {
-    bucket     = "qm-sandbox-cm-us-east-1"
+    bucket     = "qm-training-cm-us-east-1"
     key        = "infra/terraform/qm-sandbox/us-east-1/cm/exercise-<your name>.tfstate"
     region     = "us-east-1"
     encrypt    = true
