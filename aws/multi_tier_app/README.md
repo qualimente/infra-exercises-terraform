@@ -29,7 +29,7 @@ Create a config.tf with an AWS provider specified to use us-east-1
 
 Export environment variables for:
 
-`AWSAWS_DEFAULT_REGION=us-east-1`
+`AWS_DEFAULT_REGION=us-east-1`
 `AWS_ACCESS_KEY_ID=<your api access key>`
 `AWS_SECRET_ACCESS_KEY=<your secret access key>`
 
@@ -43,11 +43,27 @@ Run:
 Expected Result: 
 Terraform should initialize plugins and report zero resource additions, modifications, and deletions
 
+## Define namespace and network to use for project ##
+
+Declare variables for:
+
+* name - your name/userid, e.g. `jsmith`
+* vpc_id - the id of the VPC network to use, e.g. vpc-58a29221 
+
 ## Resolve existing network resources ##
 
 Use [aws_subnet_ids](https://www.terraform.io/docs/providers/aws/d/subnet_ids.html) data provider to resolve the subnet ids in the region's default VPC.
 
 Hint: default VPC id for region is available on the EC2 Dashboard, e.g. vpc-58a29221
+
+## Create Firewall Rules to Permit Access ##
+
+Create the following security groups:
+ 
+1. public-web - a security group that permits http and https access from the public Internet (tcp ports 80 & 443) 
+2. public-ssh - a security group that permits ssh access from the public Internet (tcp port 22)
+3. internal-web - a security group that permits http access only from sources in the VPC (tcp port 80) 
+4. outbound - a security group that permits access from the VPC to the Internet
 
 ## Create an EC2 instance ##
 
@@ -74,6 +90,7 @@ The EC2 instance should:
 * reference and use the generated keypair
 * be launched into one of the default vpc subnets
 * have a public IP
+* be publicly-accessible only via ssh
 * a tag of `Name=exercise-<yourname>`
 
 Hint: `subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, 0)}"`
@@ -87,39 +104,6 @@ What format does this look like?
 Find your the instance you just created and look at it in AWS EC2 console:
 `grep i-.* terraform.tfstate`
 
-## Reconfigure backend to use remote state ##
-
-Add to config.tf:
-
-```
-terraform {
-  backend "s3" {
-    bucket     = "qm-training-cm-us-east-1"
-    key        = "infra/terraform/qm-sandbox/us-east-1/cm/exercise-<your name>.tfstate"
-    region     = "us-east-1"
-    encrypt    = true
-    lock_table = "TerraformStateLock"
-  }
-}
-```
-
-
-## (Optional) Refactor to Support Multiple Instances ##
-
-Consider that we might want to have multiple instances...
-
-Add the 'count' field to the `aws_instance` resource definition, set to 1.  Reference `count.index` in subnet lookup.
-
-## Create Firewall Rules to Permit Access ##
-
-Create the following security groups:
- 
-1. public-web - a security group that permits http and https access from the public Internet (tcp ports 80 & 443) 
-2. public-ssh - a security group that permits ssh access from the public Internet (tcp port 22)
-3. internal-web - a security group that permits http access only from sources in the VPC (tcp port 80) 
-4. outbound - a security group that permits access from the VPC to the Internet
-
-hint:
 
 ## Attach Security Groups to EC2 Instance ##
 
@@ -139,16 +123,53 @@ ssh -i ./exercise.id_rsa ec2-user@ec2-107-23-217-33.compute-1.amazonaws.com
 For documentation visit, http://aws.amazon.com/documentation/ecs
 ```
 
-# Run Webserver #
+## Reconfigure backend to use remote state ##
+
+Reconfigure Terraform's state storage backend to use s3:
 
 ```
-docker run -d -p 80:80 nginx:1.13.7
+terraform {
+  backend "s3" {
+    bucket     = "qm-training-cm-us-east-1"
+    key        = "infra/terraform/qm-sandbox/us-east-1/cm/exercise-<your name>.tfstate"
+    region     = "us-east-1"
+    encrypt    = true
+    dynamodb_table = "TerraformStateLock"
+  }
+}
 ```
+
+Run `terraform init` again to re-initialize the state storage backend.
 
 ## Create an ELB ##
 
 Create an Elastic Load Balancer.
 
+Connect ELB to app instance and specify a health check to / on port 80
 
 
-Connect ELB to app instance.
+## Output Location of ELB and App Server ##
+
+Share the location of the ELB and App Server via a module output.
+
+Open-up the ELB location in a web browser!
+
+## Add a Postgres DB using RDS ##
+
+Use the Terraform [community RDS module](https://github.com/terraform-aws-modules/terraform-aws-rds) to instantiate a small Postgres DB:
+
+```
+  engine            = "postgres"
+  engine_version    = "9.6.3"
+  instance_class    = "db.t2.micro"
+  allocated_storage = 5
+```
+
+Navigate to the `/counter` path on the ELB.  Is it counting?
+
+## (Optional) Refactor to Support Multiple Instances ##
+
+Consider that we might want to have multiple instances...
+
+Add the 'count' field to the `aws_instance` resource definition, set to 1.  Reference `count.index` in subnet lookup.
+

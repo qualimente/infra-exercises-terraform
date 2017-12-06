@@ -1,15 +1,17 @@
-variable "region" {
-  description = "AWS region to use"
-  default     = "us-east-1"
-}
+// Define namespace and network to use for project - START
 
 variable "name" {
-  default = "exercise-skuenzli"
+  default = "skuenzli"
 }
 
 variable "vpc_id" {
   default = "vpc-58a29221"
 }
+
+// Define namespace and network to use for project - END
+
+
+// Resolve existing network resources - START
 
 data "aws_vpc" "default_vpc" {
   id = "${var.vpc_id}"
@@ -19,8 +21,13 @@ data "aws_subnet_ids" "default_vpc" {
   vpc_id = "${var.vpc_id}"
 }
 
+// Resolve existing network resources - END
+
+
+// Create Firewall Rules to Permit Access - START
+
 resource "aws_security_group" "public_web" {
-  name        = "public-web"
+  name        = "public-web-${var.name}"
   description = "Permits http and https access from the public Internet"
   vpc_id      = "${var.vpc_id}"
 
@@ -40,7 +47,7 @@ resource "aws_security_group" "public_web" {
 }
 
 resource "aws_security_group" "public_ssh" {
-  name        = "public-ssh"
+  name        = "public-ssh-${var.name}"
   description = "Permit ssh access from the public Internet"
   vpc_id      = "${var.vpc_id}"
 
@@ -54,7 +61,7 @@ resource "aws_security_group" "public_ssh" {
 }
 
 resource "aws_security_group" "internal_web" {
-  name        = "internal-web"
+  name        = "internal-web-${var.name}"
   description = "Permits http access from the sources in the VPC"
   vpc_id      = "${var.vpc_id}"
 
@@ -67,7 +74,7 @@ resource "aws_security_group" "internal_web" {
 }
 
 resource "aws_security_group" "outbound" {
-  name        = "outbound"
+  name        = "outbound-${var.name}"
   description = " permits access from the VPC to the Internet"
   vpc_id      = "${var.vpc_id}"
 
@@ -80,8 +87,12 @@ resource "aws_security_group" "outbound" {
   }
 }
 
+// Create Firewall Rules to Permit Access - END
+
+// Create an EC2 instance - START
+
 resource "aws_key_pair" "exercise" {
-  key_name   = "${var.name}"
+  key_name   = "exercise-${var.name}"
   public_key = "${file("exercise.id_rsa.pub")}"
 }
 
@@ -96,24 +107,21 @@ variable "availability_zones" {
   ]
 }
 
-variable "centos7_amis" {
-  description = "CentOS 7 AMI IDs, keyed by region"
-  type        = "map"
-
-  default = {
-    us-east-1 = "image-1234"
-    us-east-2 = "image-2341"
-    us-west-1 = "image-3412"
-    us-west-2 = "image-4123"
-  }
+variable "db_pass" {
+  default = "mypass27"
+  description = "Password to use for DB"
 }
 
 data "template_file" "init" {
-  template = "${file("${path.module}/init.yml.tpl")}"
+  template = "${file("${path.module}/nginx.yml.tpl")}"
+  
+  //uncomment serviceapi cloud-init once db instantiated
+  //template = "${file("${path.module}/init.yml.tpl")}"
 
+  //uncomment db module address output once db instantiated
   vars {
-    postgres_address = "${module.db.this_db_instance_address}"
-    postgres_endpoint = "${module.db.this_db_instance_endpoint}"
+    //postgres_address = "${module.db.this_db_instance_address}"
+    //postgres_password = "${var.db_pass}"
   }
 }
 
@@ -122,11 +130,7 @@ resource "aws_instance" "app" {
   count         = "1"
   instance_type = "t2.micro"
 
-  # Lookup the correct AMI based on the region
-  # we specified
   ami = "ami-fad25980"
-
-  #ami = "${var.centos7_amis[var.region]}"
 
   user_data = "${data.template_file.init.rendered}"
   # The name of our SSH keypair we created above.
@@ -143,12 +147,17 @@ resource "aws_instance" "app" {
   # backend instances.
   subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, count.index)}"
   tags {
-    Name = "${var.name}-${count.index}"
+    Name = "exercise-${var.name}-${count.index}"
   }
 }
 
+// Create an EC2 instance - END
+
+
+// Create an ELB - START
+
 resource "aws_elb" "web" {
-  name = "${var.name}"
+  name = "exercise-${var.name}"
 
   subnets = ["${data.aws_subnet_ids.default_vpc.ids}"]
 
@@ -175,6 +184,10 @@ resource "aws_elb" "web" {
   }
 }
 
+// Create an ELB - END
+
+
+// Output Location of ELB and App Server - START
 
 output "lb.web.dns_name" {
   value = "${aws_elb.web.dns_name}"
@@ -183,3 +196,5 @@ output "lb.web.dns_name" {
 output "app.web.dns_name" {
   value = "${aws_instance.app.public_dns}"
 }
+
+// Output Location of ELB and App Server - END
