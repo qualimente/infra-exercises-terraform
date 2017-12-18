@@ -29,16 +29,16 @@ Create a config.tf with an AWS provider specified to use us-east-1
 
 Export environment variables for:
 
-`AWS_DEFAULT_REGION=us-east-1`
-`AWS_ACCESS_KEY_ID=<your api access key>`
-`AWS_SECRET_ACCESS_KEY=<your secret access key>`
+* `AWS_DEFAULT_REGION=us-east-1`
+* `AWS_ACCESS_KEY_ID=<your api access key>`
+* `AWS_SECRET_ACCESS_KEY=<your secret access key>`
 
 Create an empty main.tf file.
 
 Run:
 
-`terraform init`
-`terraform plan`
+1. `terraform init`
+2. `terraform plan`
 
 Expected Result: 
 Terraform should initialize plugins and report zero resource additions, modifications, and deletions
@@ -95,7 +95,8 @@ The EC2 instance should:
 
 Hint: `subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, 0)}"`
 
-Digging Deeper:
+### Digging Deeper ###
+
 Inspect Terraform state:
 `head terraform.tfstate`
 
