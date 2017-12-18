@@ -16,7 +16,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket     = "qm-training-cm-us-east-1"
-    key        = "infra/terraform/qm-sandbox/us-east-1/cm/exercise-skuenzli.tfstate"
+    key        = "infra/terraform/qm-sandbox/us-east-1/cm/exercise-<your name>.tfstate"
     region     = "us-east-1"
     encrypt    = true
     dynamodb_table = "TerraformStateLock"

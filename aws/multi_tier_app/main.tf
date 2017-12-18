@@ -1,7 +1,7 @@
 // Define namespace and network to use for project - START
 
 variable "name" {
-  default = "skuenzli"
+  default = "<your name>"
 }
 
 variable "vpc_id" {
