@@ -1,6 +1,7 @@
 // Define namespace and network to use for project - START
 
 variable "name" {
+  description = "a name/userid to use for namespacing the resources created in this exercise, e.g. jsmith"
   default = "<your name>"
 }
 
