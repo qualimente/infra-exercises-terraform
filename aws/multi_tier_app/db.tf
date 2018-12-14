@@ -19,7 +19,7 @@ module "db" {
 
   engine            = "postgres"
   engine_version    = "9.6.3"
-  instance_class    = "db.t2.micro"
+  instance_class    = "db.t3.micro"
   allocated_storage = 5
   storage_encrypted = false
 

@@ -160,7 +160,7 @@ data "template_file" "init" {
 
 resource "aws_instance" "app" {
   count         = "1"
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
 
   ami = "${data.aws_ami.amazon_ecs_linux.id}"
 
@@ -201,7 +201,7 @@ module "asg" {
 
   name = "${local.exercise_app_name}"
 
-  instance_type   = "t2.micro"
+  instance_type   = "t3.micro"
   
   image_id        = "${data.aws_ami.amazon_ecs_linux.id}"
 
@@ -238,6 +238,10 @@ module "asg" {
   desired_capacity          = 1
   max_size                  = 2
   wait_for_capacity_timeout = 0
+
+  //Uncomment to enable use of spot instances
+  //Your instance may be terminated, but it'll be cheaper until it does
+  //spot_price = "0.0104"
 
   tags_as_map = "${local.base_tags}"
   // Equivalent to:
