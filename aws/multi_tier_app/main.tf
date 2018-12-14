@@ -284,4 +284,12 @@ output "app.web.dns_name" {
   value = "${aws_instance.app.public_dns}"
 }
 
+output "asg_name" {
+  value = "${module.asg.this_autoscaling_group_name}"
+}
+
+output "asg_launch_configuration_name" {
+  value = "${module.asg.this_launch_configuration_name}"
+}
+
 // Output Location of ELB and App Server - END
