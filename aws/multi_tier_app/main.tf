@@ -179,13 +179,17 @@ resource "aws_instance" "app" {
   # backend instances.
   subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, count.index)}"
 
-  tags = "${merge(local.base_tags, map("Name", "${local.exercise_app_name}-${count.index}"))}"
+  tags = "${merge(local.base_tags
+                  , map("Name", "${local.exercise_app_name}-${count.index}")
+                  , map("WorkloadType", "Pet")
+                  )}"
   // Equivalent to:
   //
   //  tags {
   //    Name = "${local.exercise_app_name}-${count.index}"
   //    Environment = "training"
   //    Owner = "${var.name}"
+  //    WorkloadType = "Pet"
   //  }
 
 }
@@ -243,7 +247,9 @@ module "asg" {
   //Your instance may be terminated, but it'll be cheaper until it does
   //spot_price = "0.0104"
 
-  tags_as_map = "${local.base_tags}"
+  tags_as_map = "${merge(local.base_tags
+                         , map("WorkloadType", "CuteButNamelessCow")
+                         )}"
   // Equivalent to:
   //
   //  tags = [
@@ -252,11 +258,7 @@ module "asg" {
   //      value               = "training"
   //      propagate_at_launch = true
   //    },
-  //    {
-  //      key                 = "Owner"
-  //      value               = "${var.name}"
-  //      propagate_at_launch = true
-  //    },
+  //  ... snip ...
   //  ]
 }
 // Create an Auto Scaling Group to run the application - END
