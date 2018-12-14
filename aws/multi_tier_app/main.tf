@@ -276,7 +276,7 @@ resource "aws_elb" "web" {
     "${aws_security_group.outbound.id}",
   ]
 
-  instances = ["${aws_instance.app.id}"]
+  //instances = ["${aws_instance.app.id}"]
 
   listener {
     lb_port           = 80
@@ -294,6 +294,13 @@ resource "aws_elb" "web" {
   }
 
   tags = "${local.base_tags}"
+}
+
+// Attach Pet EC2 instance to ELB using an attachment resource to avoid
+// removal of ASG's instances when running terraform apply for 2nd/3rd/etc set of changes
+resource "aws_elb_attachment" "app_instance" {
+  elb = "${aws_elb.web.id}"
+  instance = "${aws_instance.app.id}"
 }
 
 // Create an ELB - END
