@@ -92,6 +92,26 @@ resource "aws_security_group" "outbound" {
 
 // Create an EC2 instance - START
 
+data "aws_ami" "amazon_ecs_linux" {
+  most_recent = true
+
+  filter {
+    name = "name"
+
+    values = [
+      "amzn-ami-*.i-amazon-ecs-optimized",
+    ]
+  }
+
+  filter {
+    name = "owner-alias"
+
+    values = [
+      "amazon",
+    ]
+  }
+}
+
 resource "aws_key_pair" "exercise" {
   key_name   = "exercise-${var.name}"
   public_key = "${file("exercise.id_rsa.pub")}"
@@ -131,7 +151,7 @@ resource "aws_instance" "app" {
   count         = "1"
   instance_type = "t2.micro"
 
-  ami = "ami-fad25980"
+  ami = "${data.aws_ami.amazon_ecs_linux.id}"
 
   user_data = "${data.template_file.init.rendered}"
   # The name of our SSH keypair we created above.
@@ -153,6 +173,67 @@ resource "aws_instance" "app" {
 }
 
 // Create an EC2 instance - END
+
+// Create an Auto Scaling Group to run the application - START
+
+locals {
+  counter_app_name = "${var.name}-counter-app"
+}
+
+module "asg" {
+  //use a module for the official Terraform Registry
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "2.9.0"
+
+  name = "${local.counter_app_name}"
+
+  instance_type   = "t2.micro"
+  
+  image_id        = "${data.aws_ami.amazon_ecs_linux.id}"
+
+  user_data = "${data.template_file.init.rendered}"
+  key_name = "${aws_key_pair.exercise.id}"
+
+  # Launch configuration
+  #
+  # launch_configuration = "my-existing-launch-configuration" # Use the existing launch configuration
+  # create_lc = false # disables creation of launch configuration
+  lc_name = "${local.counter_app_name}"
+
+  security_groups = [
+      "${aws_security_group.public_ssh.id}",
+      "${aws_security_group.internal_web.id}",
+      "${aws_security_group.outbound.id}",
+    ]
+
+  load_balancers  = ["${aws_elb.web.id}"]
+
+  root_block_device = [
+    {
+      volume_size = "20"
+      volume_type = "gp2"
+      delete_on_termination = true
+    },
+  ]
+
+  # Auto scaling group
+  asg_name                  = "${local.counter_app_name}"
+  vpc_zone_identifier       = ["${data.aws_subnet_ids.default_vpc.ids}"]
+  health_check_type         = "EC2"
+  min_size                  = 1
+  desired_capacity          = 1
+  max_size                  = 2
+  wait_for_capacity_timeout = 0
+
+  tags = [
+    {
+      key                 = "Environment"
+      value               = "training"
+      propagate_at_launch = true
+    },
+  ]
+}
+// Create an Auto Scaling Group to run the application - END
 
 
 // Create an ELB - START
