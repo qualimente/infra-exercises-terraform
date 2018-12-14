@@ -111,7 +111,7 @@ Find your the instance you just created and look at it in AWS EC2 console:
 Attach the public-ssh, internal-web, and outbound security groups to the ec2 instance.
 
 You should now be able to login to the instance via ssh with:
-`ssh -i ./exercise.id_rsa <public DNS>`
+`ssh -i ./exercise.id_rsa ec2-user@<public DNS>`
 
 e.g.
 ```
