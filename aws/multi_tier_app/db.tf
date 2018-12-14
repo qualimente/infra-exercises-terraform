@@ -15,7 +15,7 @@ resource "aws_security_group" "db" {
 module "db" {
   source = "git@github.com:terraform-aws-modules/terraform-aws-rds.git?ref=v1.4.0"
 
-  identifier = "${var.name}"
+  identifier = "${local.exercise_app_name}"
 
   engine            = "postgres"
   engine_version    = "9.6.3"

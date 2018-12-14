@@ -112,8 +112,12 @@ data "aws_ami" "amazon_ecs_linux" {
   }
 }
 
+locals {
+  exercise_app_name = "exercise-${var.name}"
+}
+
 resource "aws_key_pair" "exercise" {
-  key_name   = "exercise-${var.name}"
+  key_name   = "${local.exercise_app_name}"
   public_key = "${file("exercise.id_rsa.pub")}"
 }
 
@@ -168,7 +172,7 @@ resource "aws_instance" "app" {
   # backend instances.
   subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, count.index)}"
   tags {
-    Name = "exercise-${var.name}-${count.index}"
+    Name = "${local.exercise_app_name}-${count.index}"
   }
 }
 
@@ -176,16 +180,12 @@ resource "aws_instance" "app" {
 
 // Create an Auto Scaling Group to run the application - START
 
-locals {
-  counter_app_name = "${var.name}-counter-app"
-}
-
 module "asg" {
   //use a module for the official Terraform Registry
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "2.9.0"
 
-  name = "${local.counter_app_name}"
+  name = "${local.exercise_app_name}"
 
   instance_type   = "t2.micro"
   
@@ -198,7 +198,7 @@ module "asg" {
   #
   # launch_configuration = "my-existing-launch-configuration" # Use the existing launch configuration
   # create_lc = false # disables creation of launch configuration
-  lc_name = "${local.counter_app_name}"
+  lc_name = "${local.exercise_app_name}"
 
   security_groups = [
       "${aws_security_group.public_ssh.id}",
@@ -217,7 +217,7 @@ module "asg" {
   ]
 
   # Auto scaling group
-  asg_name                  = "${local.counter_app_name}"
+  asg_name                  = "${local.exercise_app_name}"
   vpc_zone_identifier       = ["${data.aws_subnet_ids.default_vpc.ids}"]
   health_check_type         = "EC2"
   min_size                  = 1
@@ -231,6 +231,11 @@ module "asg" {
       value               = "training"
       propagate_at_launch = true
     },
+    {
+      key                 = "Owner"
+      value               = "${var.name}"
+      propagate_at_launch = true
+    },
   ]
 }
 // Create an Auto Scaling Group to run the application - END
@@ -239,7 +244,7 @@ module "asg" {
 // Create an ELB - START
 
 resource "aws_elb" "web" {
-  name = "exercise-${var.name}"
+  name = "${local.exercise_app_name}"
 
   subnets = ["${data.aws_subnet_ids.default_vpc.ids}"]
 
