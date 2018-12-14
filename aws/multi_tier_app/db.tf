@@ -15,7 +15,7 @@ resource "aws_security_group" "db" {
 module "db" {
   source = "git@github.com:terraform-aws-modules/terraform-aws-rds.git?ref=v1.4.0"
 
-  identifier = "${var.name}"
+  identifier = "${local.exercise_app_name}"
 
   engine            = "postgres"
   engine_version    = "9.6.3"
@@ -42,10 +42,7 @@ module "db" {
   # disable backups to create DB faster
   backup_retention_period = 0
 
-  tags = {
-    Owner       = "platform"
-    Environment = "exercise"
-  }
+  tags = "${local.base_tags}"
 
   # DB subnet group
   subnet_ids = ["${data.aws_subnet_ids.default_vpc.ids}"]

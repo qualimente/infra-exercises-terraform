@@ -9,6 +9,13 @@ variable "vpc_id" {
   default = "vpc-58a29221"
 }
 
+locals {
+  base_tags = {
+    Environment = "training"
+    Owner = "${var.name}"
+  }
+}
+
 // Define namespace and network to use for project - END
 
 
@@ -92,8 +99,32 @@ resource "aws_security_group" "outbound" {
 
 // Create an EC2 instance - START
 
+data "aws_ami" "amazon_ecs_linux" {
+  most_recent = true
+
+  filter {
+    name = "name"
+
+    values = [
+      "amzn-ami-*.i-amazon-ecs-optimized",
+    ]
+  }
+
+  filter {
+    name = "owner-alias"
+
+    values = [
+      "amazon",
+    ]
+  }
+}
+
+locals {
+  exercise_app_name = "exercise-${var.name}"
+}
+
 resource "aws_key_pair" "exercise" {
-  key_name   = "exercise-${var.name}"
+  key_name   = "${local.exercise_app_name}"
   public_key = "${file("exercise.id_rsa.pub")}"
 }
 
@@ -129,9 +160,9 @@ data "template_file" "init" {
 
 resource "aws_instance" "app" {
   count         = "1"
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
 
-  ami = "ami-fad25980"
+  ami = "${data.aws_ami.amazon_ecs_linux.id}"
 
   user_data = "${data.template_file.init.rendered}"
   # The name of our SSH keypair we created above.
@@ -147,18 +178,96 @@ resource "aws_instance" "app" {
   # environment it's more common to have a separate private subnet for
   # backend instances.
   subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, count.index)}"
-  tags {
-    Name = "exercise-${var.name}-${count.index}"
-  }
+
+  tags = "${merge(local.base_tags
+                  , map("Name", "${local.exercise_app_name}-${count.index}")
+                  , map("WorkloadType", "Pet")
+                  )}"
+  // Equivalent to:
+  //
+  //  tags {
+  //    Name = "${local.exercise_app_name}-${count.index}"
+  //    Environment = "training"
+  //    Owner = "${var.name}"
+  //    WorkloadType = "Pet"
+  //  }
+
 }
 
 // Create an EC2 instance - END
+
+// Create an Auto Scaling Group to run the application - START
+
+module "asg" {
+  //use a module for the official Terraform Registry
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "2.9.0"
+
+  name = "${local.exercise_app_name}"
+
+  instance_type   = "t3.micro"
+  
+  image_id        = "${data.aws_ami.amazon_ecs_linux.id}"
+
+  user_data = "${data.template_file.init.rendered}"
+  key_name = "${aws_key_pair.exercise.id}"
+
+  # Launch configuration
+  #
+  # launch_configuration = "my-existing-launch-configuration" # Use the existing launch configuration
+  # create_lc = false # disables creation of launch configuration
+  lc_name = "${local.exercise_app_name}"
+
+  security_groups = [
+      "${aws_security_group.public_ssh.id}",
+      "${aws_security_group.internal_web.id}",
+      "${aws_security_group.outbound.id}",
+    ]
+
+  load_balancers  = ["${aws_elb.web.id}"]
+
+  root_block_device = [
+    {
+      volume_size = "20"
+      volume_type = "gp2"
+      delete_on_termination = true
+    },
+  ]
+
+  # Auto scaling group
+  asg_name                  = "${local.exercise_app_name}"
+  vpc_zone_identifier       = ["${data.aws_subnet_ids.default_vpc.ids}"]
+  health_check_type         = "EC2"
+  min_size                  = 1
+  desired_capacity          = 1
+  max_size                  = 2
+  wait_for_capacity_timeout = 0
+
+  //Uncomment to enable use of spot instances
+  //Your instance may be terminated, but it'll be cheaper until it does
+  //spot_price = "0.0104"
+
+  tags_as_map = "${merge(local.base_tags
+                         , map("WorkloadType", "CuteButNamelessCow")
+                         )}"
+  // Equivalent to:
+  //
+  //  tags = [
+  //    {
+  //      key                 = "Environment"
+  //      value               = "training"
+  //      propagate_at_launch = true
+  //    },
+  //  ... snip ...
+  //  ]
+}
+// Create an Auto Scaling Group to run the application - END
 
 
 // Create an ELB - START
 
 resource "aws_elb" "web" {
-  name = "exercise-${var.name}"
+  name = "${local.exercise_app_name}"
 
   subnets = ["${data.aws_subnet_ids.default_vpc.ids}"]
 
@@ -167,7 +276,7 @@ resource "aws_elb" "web" {
     "${aws_security_group.outbound.id}",
   ]
 
-  instances = ["${aws_instance.app.id}"]
+  //instances = ["${aws_instance.app.id}"]
 
   listener {
     lb_port           = 80
@@ -183,6 +292,15 @@ resource "aws_elb" "web" {
     target              = "HTTP:80/"
     interval            = 15
   }
+
+  tags = "${local.base_tags}"
+}
+
+// Attach Pet EC2 instance to ELB using an attachment resource to avoid
+// removal of ASG's instances when running terraform apply for 2nd/3rd/etc set of changes
+resource "aws_elb_attachment" "app_instance" {
+  elb = "${aws_elb.web.id}"
+  instance = "${aws_instance.app.id}"
 }
 
 // Create an ELB - END
@@ -196,6 +314,14 @@ output "lb.web.dns_name" {
 
 output "app.web.dns_name" {
   value = "${aws_instance.app.public_dns}"
+}
+
+output "asg_name" {
+  value = "${module.asg.this_autoscaling_group_name}"
+}
+
+output "asg_launch_configuration_name" {
+  value = "${module.asg.this_launch_configuration_name}"
 }
 
 // Output Location of ELB and App Server - END
