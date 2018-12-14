@@ -42,10 +42,7 @@ module "db" {
   # disable backups to create DB faster
   backup_retention_period = 0
 
-  tags = {
-    Owner       = "platform"
-    Environment = "exercise"
-  }
+  tags = "${local.base_tags}"
 
   # DB subnet group
   subnet_ids = ["${data.aws_subnet_ids.default_vpc.ids}"]

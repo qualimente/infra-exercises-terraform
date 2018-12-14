@@ -9,6 +9,13 @@ variable "vpc_id" {
   default = "vpc-58a29221"
 }
 
+locals {
+  base_tags = {
+    Environment = "training"
+    Owner = "${var.name}"
+  }
+}
+
 // Define namespace and network to use for project - END
 
 
@@ -171,9 +178,16 @@ resource "aws_instance" "app" {
   # environment it's more common to have a separate private subnet for
   # backend instances.
   subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, count.index)}"
-  tags {
-    Name = "${local.exercise_app_name}-${count.index}"
-  }
+
+  tags = "${merge(local.base_tags, map("Name", "${local.exercise_app_name}-${count.index}"))}"
+  // Equivalent to:
+  //
+  //  tags {
+  //    Name = "${local.exercise_app_name}-${count.index}"
+  //    Environment = "training"
+  //    Owner = "${var.name}"
+  //  }
+
 }
 
 // Create an EC2 instance - END
@@ -225,18 +239,21 @@ module "asg" {
   max_size                  = 2
   wait_for_capacity_timeout = 0
 
-  tags = [
-    {
-      key                 = "Environment"
-      value               = "training"
-      propagate_at_launch = true
-    },
-    {
-      key                 = "Owner"
-      value               = "${var.name}"
-      propagate_at_launch = true
-    },
-  ]
+  tags_as_map = "${local.base_tags}"
+  // Equivalent to:
+  //
+  //  tags = [
+  //    {
+  //      key                 = "Environment"
+  //      value               = "training"
+  //      propagate_at_launch = true
+  //    },
+  //    {
+  //      key                 = "Owner"
+  //      value               = "${var.name}"
+  //      propagate_at_launch = true
+  //    },
+  //  ]
 }
 // Create an Auto Scaling Group to run the application - END
 
@@ -269,6 +286,8 @@ resource "aws_elb" "web" {
     target              = "HTTP:80/"
     interval            = 15
   }
+
+  tags = "${local.base_tags}"
 }
 
 // Create an ELB - END
