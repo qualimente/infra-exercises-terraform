@@ -1,5 +1,6 @@
 .terraform/
 terraform.tfstate*
+terraform.tfvars
 tf-test-plan.out
 .kitchen/
 infra-change*.tfplan
