@@ -262,6 +262,11 @@ module "asg" {
       value = "${var.name}"
       propagate_at_launch = true
     },
+    {
+      key = "WorkloadType"
+      value = "CuteButNamelessCow"
+      propagate_at_launch = true
+    }
   ]
 
   // Equivalent to:
@@ -330,11 +335,11 @@ output "app.web.dns_name" {
   value = "${aws_instance.app.public_dns}"
 }
 
-output "asg_name" {
+output "app.asg.name" {
   value = "${module.asg.this_autoscaling_group_name}"
 }
 
-output "asg_launch_configuration_name" {
+output "app.asg.launch_configuration_name" {
   value = "${module.asg.this_launch_configuration_name}"
 }
 

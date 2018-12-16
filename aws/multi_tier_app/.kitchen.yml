@@ -21,6 +21,6 @@ verifier:
     - name: terraform
       controls:
         - terraform_state
-        - starter
+        - multi_tier_app
 suites:
   - name: minimal

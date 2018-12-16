@@ -1,6 +1,5 @@
 // Instantiate a minimal version of the module for testing
 provider "aws" {
-  //alias  = "testing"
   region = "us-east-1"
 }
 
@@ -9,7 +8,7 @@ resource "random_id" "testing_suffix" {
 }
 
 locals {
-  name = "${var.name}${random_id.testing_suffix.hex}"
+  name = "${var.name}-${random_id.testing_suffix.hex}"
 }
 
 module "it_minimal" {
@@ -18,11 +17,7 @@ module "it_minimal" {
 
   name = "${local.name}"
   vpc_id = "vpc-58a29221"
-
-//  providers = {
-//    aws = "aws.testing"
-//  }
-
+  
 }
 
 variable "name" {
@@ -34,12 +29,20 @@ output "testing_suffix_hex" {
   value = "${random_id.testing_suffix.hex}"
 }
 
+output "multi_tier_app.name" {
+  value = "${local.name}"
+}
+
 output "multi_tier_app.lb.web.dns_name" {
   value = "${module.it_minimal.lb.web.dns_name}"
 }
 
 output "multi_tier_app.app.web.dns_name" {
   value = "${module.it_minimal.app.web.dns_name}"
+}
+
+output "multi_tier_app.app.asg.name" {
+  value = "${module.it_minimal.app.asg.name}"
 }
 
 output "terraform_state" {
