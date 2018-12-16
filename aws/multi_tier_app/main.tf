@@ -14,6 +14,9 @@ locals {
     Environment = "training"
     Owner = "${var.name}"
   }
+  asg_instance_tags = "${merge(local.base_tags
+                             , map("WorkloadType", "CuteButNamelessCow")
+                             )}"
 }
 
 // Define namespace and network to use for project - END
@@ -247,9 +250,25 @@ module "asg" {
   //Your instance may be terminated, but it'll be cheaper until it does
   //spot_price = "0.0104"
 
-  tags_as_map = "${merge(local.base_tags
-                         , map("WorkloadType", "CuteButNamelessCow")
-                         )}"
+  //tags_as_map = "${local.asg_instance_tags}"
+  tags = [
+    {
+      key = "Environment"
+      value = "training"
+      propagate_at_launch = true
+    },
+    {
+      key = "Owner"
+      value = "${var.name}"
+      propagate_at_launch = true
+    },
+    {
+      key = "WorkloadType"
+      value = "CuteButNamelessCow"
+      propagate_at_launch = true
+    }
+  ]
+
   // Equivalent to:
   //
   //  tags = [
@@ -316,11 +335,11 @@ output "app.web.dns_name" {
   value = "${aws_instance.app.public_dns}"
 }
 
-output "asg_name" {
+output "app.asg.name" {
   value = "${module.asg.this_autoscaling_group_name}"
 }
 
-output "asg_launch_configuration_name" {
+output "app.asg.launch_configuration_name" {
   value = "${module.asg.this_launch_configuration_name}"
 }
 
