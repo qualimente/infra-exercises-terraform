@@ -25,7 +25,7 @@ In total, the exercise will step through provisioning:
 
 ## Getting Started: Configuring the AWS provider ##
 
-Create a config.tf with an AWS provider specified to use us-east-1
+Create a config.tf file with an AWS provider specified to use us-east-1
 
 Export environment variables for:
 
@@ -48,7 +48,9 @@ Terraform should initialize plugins and report zero resource additions, modifica
 Declare variables for:
 
 * name - your name/userid, e.g. `jsmith`
-* vpc_id - the id of the VPC network to use, e.g. vpc-58a29221 
+* vpc_id - the id of the VPC network to use, e.g. vpc-58a29221
+
+Create a terraform.tfvars file and se the value of the `name` variable in that file. 
 
 ## Resolve existing network resources ##
 
@@ -83,7 +85,7 @@ Create one t2.medium EC2 instance using [Amazon ECS Optimized Linux](http://docs
 ami details:
 
 * ami id in us-east-1: ami-fad25980
-* name: amzn-ami-2017.09.d-amazon-ecs-optimized 
+* name: amzn-ami-2018.03.d-amazon-ecs-optimized 
 
 The EC2 instance should:
 
@@ -118,7 +120,7 @@ e.g.
 ssh -i ./exercise.id_rsa ec2-user@ec2-107-23-217-33.compute-1.amazonaws.com
 
    __|  __|  __|
-   _|  (   \__ \   Amazon ECS-Optimized Amazon Linux AMI 2017.09.d
+   _|  (   \__ \   Amazon ECS-Optimized Amazon Linux AMI 2018.03.d
  ____|\___|____/
 
 For documentation visit, http://aws.amazon.com/documentation/ecs
