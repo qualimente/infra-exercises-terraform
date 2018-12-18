@@ -21,6 +21,10 @@ In total, the exercise will step through provisioning:
     * a key pair for use with app instances
     * master and IAM credential information for the database instance
 
+The final deployment will look like:
+
+![Deployment Architecture](infra-exercises-arch.png "Deployment Architecture")
+
 # Exercise #
 
 ## Getting Started: Configuring the AWS provider ##
