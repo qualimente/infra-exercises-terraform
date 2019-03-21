@@ -2,7 +2,9 @@
 
 This exercise will challenge you to create a 'basic' multi-tier application on AWS.
 
-The application will be a webapp that uses a Cloud-managed Postgres instance, but will also require the provisioning of attendant networking and security infrastructure.
+![Logical Architecture](logical-architecture.png "Deployment Architecture")
+
+The application is a webapp that uses a Cloud-managed Postgres instance and will also require the provisioning of supporting networking and security infrastructure.
 
 In total, the exercise will step through provisioning:
 
@@ -23,7 +25,7 @@ In total, the exercise will step through provisioning:
 
 The final deployment will look like:
 
-![Deployment Architecture](infra-exercises-arch.png "Deployment Architecture")
+![Deployment Architecture](deployment-architecture.png "Deployment Architecture")
 
 # Exercise #
 
