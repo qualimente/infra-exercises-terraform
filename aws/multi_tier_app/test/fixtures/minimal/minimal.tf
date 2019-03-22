@@ -19,15 +19,13 @@ module "it_minimal" {
   //instantiate multi_tier_app module for a minimal integration test
   source = "../../../"
 
-  name = "${local.name}"
+  name   = "${local.name}"
   vpc_id = "${data.aws_vpc.default.id}"
-  
 }
 
 variable "name" {
   type = "string"
 }
-
 
 output "testing_suffix_hex" {
   value = "${random_id.testing_suffix.hex}"

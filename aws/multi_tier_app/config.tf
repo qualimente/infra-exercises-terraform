@@ -2,17 +2,19 @@
 
 variable "region" {
   description = "AWS region to use"
-  default = "us-west-2"
+  default     = "us-west-2"
 }
 
 //provider "aws" {
 //  region = "${var.region}"
 //}
 
+
 // Configuring the AWS provider - END
 
 
 // Reconfigure backend to use remote state - START
+
 
 //terraform {
 //  backend "s3" {
@@ -24,4 +26,6 @@ variable "region" {
 //  }
 //}
 
+
 // Reconfigure backend to use remote state - END
+
