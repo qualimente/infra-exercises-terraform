@@ -126,17 +126,6 @@ resource "aws_key_pair" "exercise" {
   public_key = "${file("exercise.id_rsa.pub")}"
 }
 
-variable "availability_zones" {
-  description = "List of availability zones to use"
-  type        = "list"
-
-  default = [
-    "us-west-2a",
-    "us-west-2b",
-    "us-west-2c",
-  ]
-}
-
 variable "db_pass" {
   default = "mypass27"
   description = "Password to use for DB"
@@ -171,11 +160,12 @@ resource "aws_instance" "app" {
     "${aws_security_group.internal_web.id}",
     "${aws_security_group.outbound.id}",
   ]
-  availability_zone = "${var.availability_zones[count.index]}"
-  # We're going to launch into the same subnet as our ELB. In a production
-  # environment it's more common to have a separate private subnet for
+
+  # We're going to launch into *any* subnet in the VPC. In a 'default' VPC
+  # all of the subnets are 'public', supporting ingress and egress to the Internet.
+  # In a 'real' deployment it's more common to have a separate private subnet for
   # backend instances.
-  subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, count.index)}"
+  #subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, count.index)}"
 
   tags = "${merge(local.base_tags
                   , map("Name", "${local.exercise_app_name}-${count.index}")
@@ -234,6 +224,11 @@ module "asg" {
 
   # Auto scaling group
   asg_name                  = "${local.exercise_app_name}"
+
+  # We're going to launch into *any* subnet in the VPC. In a 'default' VPC
+  # all of the subnets are 'public', supporting ingress and egress to the Internet.
+  # In a 'real' deployment it's more common to have a separate private subnet for
+  # backend instances.
   vpc_zone_identifier       = ["${data.aws_subnet_ids.default_vpc.ids}"]
   health_check_type         = "EC2"
   min_size                  = 1
