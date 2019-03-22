@@ -105,6 +105,8 @@ resource "aws_security_group" "outbound" {
 data "aws_ami" "amazon_ecs_linux" {
   most_recent = true
 
+  owners           = ["amazon"]
+
   filter {
     name = "name"
 
@@ -113,13 +115,6 @@ data "aws_ami" "amazon_ecs_linux" {
     ]
   }
 
-  filter {
-    name = "owner-alias"
-
-    values = [
-      "amazon",
-    ]
-  }
 }
 
 locals {
@@ -136,9 +131,9 @@ variable "availability_zones" {
   type        = "list"
 
   default = [
-    "us-east-1a",
-    "us-east-1b",
-    "us-east-1c",
+    "us-west-2a",
+    "us-west-2b",
+    "us-west-2c",
   ]
 }
 

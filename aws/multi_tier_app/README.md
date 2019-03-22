@@ -31,11 +31,11 @@ The final deployment will look like:
 
 ## Getting Started: Configuring the AWS provider ##
 
-Create a config.tf file with an AWS provider specified to use us-east-1
+Create a config.tf file with an AWS provider specified to use us-west-2
 
 Export environment variables for:
 
-* `AWS_DEFAULT_REGION=us-east-1`
+* `AWS_DEFAULT_REGION=us-west-2`
 * `AWS_ACCESS_KEY_ID=<your api access key>`
 * `AWS_SECRET_ACCESS_KEY=<your secret access key>`
 
@@ -90,7 +90,7 @@ Run `terraform apply`
 Create one t2.medium EC2 instance using [Amazon ECS Optimized Linux](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
 ami details:
 
-* ami id in us-east-1: ami-fad25980
+* ami id in us-west-2: ami-fad25980
 * name: amzn-ami-2018.03.d-amazon-ecs-optimized 
 
 The EC2 instance should:
@@ -139,9 +139,9 @@ Reconfigure Terraform's state storage backend to use s3:
 ```
 terraform {
   backend "s3" {
-    bucket     = "qm-training-cm-us-east-1"
-    key        = "infra/terraform/qm-sandbox/us-east-1/cm/exercise-<your name>.tfstate"
-    region     = "us-east-1"
+    bucket     = "qm-training-cm-us-west-2"
+    key        = "infra/terraform/qm-sandbox/us-west-2/cm/exercise-<your name>.tfstate"
+    region     = "us-west-2"
     encrypt    = true
     dynamodb_table = "TerraformStateLock"
   }

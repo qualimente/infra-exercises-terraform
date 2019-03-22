@@ -33,8 +33,8 @@ control 'terraform_state' do
       describe('Multi-Tier App Resource Identifiers') do
         describe('Load Balancer DNS Name') do
           subject { lb_web_dns_name }
-          # example: exercise-minimal-itf076f1b1-1222039069.us-east-1.elb.amazonaws.com
-          it { is_expected.to match(/exercise-#{name}-[\d]+\.us-east-1\.elb\.amazonaws\.com/) }
+          # example: exercise-minimal-itf076f1b1-1222039069.us-west-2.elb.amazonaws.com
+          it { is_expected.to match(/exercise-#{name}-[\d]+\.us-west-2\.elb\.amazonaws\.com/) }
         end
         describe('App ASG Name') do
           subject { app_asg_name }
