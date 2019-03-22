@@ -1,6 +1,6 @@
 // Instantiate a minimal version of the module for testing
 provider "aws" {
-  region = "us-east-1"
+  region = "us-west-2"
 }
 
 resource "random_id" "testing_suffix" {
@@ -11,19 +11,21 @@ locals {
   name = "${var.name}-${random_id.testing_suffix.hex}"
 }
 
+data "aws_vpc" default {
+  default = true
+}
+
 module "it_minimal" {
   //instantiate multi_tier_app module for a minimal integration test
   source = "../../../"
 
-  name = "${local.name}"
-  vpc_id = "vpc-58a29221"
-  
+  name   = "${local.name}"
+  vpc_id = "${data.aws_vpc.default.id}"
 }
 
 variable "name" {
   type = "string"
 }
-
 
 output "testing_suffix_hex" {
   value = "${random_id.testing_suffix.hex}"

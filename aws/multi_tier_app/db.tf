@@ -1,14 +1,14 @@
 // Add a Postgres DB using RDS - START
 
 resource "aws_security_group" "db" {
-  name = "db-${var.name}"
+  name   = "db-${var.name}"
   vpc_id = "${var.vpc_id}"
 
   ingress {
-    from_port = "5432"
-    to_port = "5432"
-    protocol = "tcp"
-    security_groups = [ "${aws_security_group.internal_web.id}"]
+    from_port       = "5432"
+    to_port         = "5432"
+    protocol        = "tcp"
+    security_groups = ["${aws_security_group.internal_web.id}"]
   }
 }
 
@@ -63,3 +63,4 @@ output "db.web.endpoint" {
 }
 
 // Add a Postgres DB using RDS - END
+
