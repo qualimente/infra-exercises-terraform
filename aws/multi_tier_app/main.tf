@@ -3,10 +3,11 @@
 variable "name" {
   description = "a name/userid to use for namespacing the resources created in this exercise, e.g. jsmith"
   default     = "<your name>"
+  type        = "string"
 }
 
 variable "vpc_id" {
-  default = "vpc-58a29221"
+  type = "string"
 }
 
 locals {
