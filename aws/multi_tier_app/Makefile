@@ -87,7 +87,7 @@ kitchen:
 docs:
 	@$(call terraform-docs,markdown main.tf db.tf > interface.md)
 
-all: deps init format lint converge verify docs
+all: deps init format converge verify docs
 
 circleci-build:
 	@circleci build \

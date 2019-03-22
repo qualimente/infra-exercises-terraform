@@ -15,9 +15,11 @@ jobs:
           command: mkdir -p ~/.ssh && ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
       - run:
           name: make infra
+          working_directory: /module/aws/multi_tier_app/
           command: make all
       - store_artifacts:
-          path: /module/.kitchen/
+          path: /module/aws/multi_tier_app/.kitchen/
       - run:
           name: destroy minimal test infra
+          working_directory: /module/aws/multi_tier_app/
           command: make destroy
