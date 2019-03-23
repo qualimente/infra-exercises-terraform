@@ -1,8 +1,4 @@
 // Instantiate a minimal version of the module for testing
-provider "aws" {
-  region = "us-west-2"
-}
-
 resource "random_id" "testing_suffix" {
   byte_length = 4
 }
