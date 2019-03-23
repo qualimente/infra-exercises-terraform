@@ -79,7 +79,7 @@ Create the following security groups, each name suffixed with `-${var.name}`:
 
 The 'public-web' security group should end up with a name like `public-web-jsmith`.  This namespacing pattern will avoid collisions with other students' for Security Groups and other resources.  
 
-## Create an EC2 instance ##
+## Create a KeyPair for use with EC2 ##
 
 Create an AWS Key Pair using an ssh keypair.
 
@@ -96,7 +96,12 @@ Expected Result: `1 to add, 0 to change, 0 to destroy.`
 
 Run `terraform apply`
 
-Create one t3.medium EC2 instance using [Amazon ECS Optimized Linux](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
+## Create an EC2 instance managed by an Auto Scaling Group ##
+
+Define an Auto Scaling Group (ASG) using the [terraform-aws-modules/autoscaling/aws](https://github.com/terraform-aws-modules/terraform-aws-autoscaling) Terraform module, version `2.9.0`. 
+
+
+The ASG should create and maintain one t3.medium EC2 instance using [Amazon ECS Optimized Linux](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
 ami details:
 
 * ami id in us-west-2: ami-01b70aea4161476b7
@@ -104,11 +109,18 @@ ami details:
 
 The EC2 instance should:
 
-* reference and use the generated keypair
-* be launched into one of the default vpc subnets
+* reference the generated keypair to permit logins
+* be launched into one of the default vpc subnets; hint: `vpc_zone_identifier = ["${data.aws_subnet_ids.default_vpc.ids}"]`
 * have a public IP
-* be publicly-accessible only via ssh
-* a tag of `Name=exercise-<yourname>`
+* be publicly-accessible _only_ via ssh
+* run the `nginx.yml.tpl` cloud-init script on startup
+* be tagged with
+
+    * `Name=exercise-<yourname>`
+    * `Environment=training`
+    * `WorkloadType=CuteButNamelessCow`
+
+Run `terraform plan` and `terraform apply`
 
 ### Digging Deeper ###
 
@@ -123,7 +135,9 @@ Find your the instance you just created and look at it in AWS EC2 console:
 
 ## Attach Security Groups to EC2 Instance ##
 
-Attach the public-ssh, internal-web, and outbound security groups to the ec2 instance.
+Attach the public-ssh, internal-web, and outbound security groups to the ec2 instances.
+
+Run `terraform plan` and `terraform apply`
 
 You should now be able to login to the instance via ssh with:
 `ssh -i ./exercise.id_rsa ec2-user@<public DNS>`
@@ -190,7 +204,7 @@ Navigate to the `/counter` path on the ELB.  Is it counting?
 
 Consider that we might want to have multiple instances...
 
-Add the 'count' field to the `aws_instance` resource definition, set to 1.  Reference `count.index` in subnet lookup.
+Update the ASG's `desired_capacity` field 2.  Plan & Apply.
 
 
 # Local Development and Testing #
