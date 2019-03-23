@@ -198,6 +198,8 @@ Use the Terraform [community RDS module](https://github.com/terraform-aws-module
   allocated_storage = 5
 ```
 
+Switch the ASG's user-data to use the `counter.yml.tpl` cloud-init script to launch the `counter` application.  Be sure to uncomment the postgres address and password during template rendering. 
+
 Navigate to the `/counter` path on the ELB.  Is it counting?
 
 ## (Optional) Refactor to Support Multiple Instances ##
