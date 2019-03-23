@@ -138,12 +138,16 @@ variable "db_pass" {
 data "template_file" "init" {
   template = "${file("${path.module}/nginx.yml.tpl")}"
 
-  //uncomment serviceapi cloud-init once db instantiated
-  //template = "${file("${path.module}/init.yml.tpl")}"
+  #uncomment serviceapi cloud-init once db instantiated
+  #template = "${file("${path.module}/counter.yml.tpl")}"
 
   //uncomment db module address output once db instantiated
   vars {
-    //postgres_address = "${module.db.this_db_instance_address}"  //postgres_password = "${var.db_pass}"
+    #postgres_address = "${module.db.this_db_instance_address}"
+    
+    # note: passing a password this way is insecure because it will be visible in the EC2 console, amongst other problems
+    # secrets should actually be retrieved from AWS ParameterStore
+    #postgres_password = "${var.db_pass}"
   }
 }
 
