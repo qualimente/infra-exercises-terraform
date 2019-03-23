@@ -54,32 +54,41 @@ Terraform should initialize plugins and report zero resource additions, modifica
 Declare variables for:
 
 * name - your name/userid, e.g. `jsmith`
-* vpc_id - the id of the VPC network to use, e.g. vpc-58a29221
+* vpc_id - the id of the VPC network to use, e.g. `vpc-58a29221`
 
-Create a terraform.tfvars file and se the value of the `name` variable in that file. 
+Specify the default values in the variable declarations.
+
+Create a terraform.tfvars file and set the value of the `name` variable in that file. 
 
 ## Resolve existing network resources ##
 
-Use [aws_subnet_ids](https://www.terraform.io/docs/providers/aws/d/subnet_ids.html) data provider to resolve the subnet ids in the region's default VPC.
+Use the [aws_vpc](https://www.terraform.io/docs/providers/aws/d/vpc.html) data source to resolve information about the VPC identified by `var.vpc_id`
 
-Hint: default VPC id for region is available on the EC2 Dashboard, e.g. vpc-58a29221
+Use the [aws_subnet_ids](https://www.terraform.io/docs/providers/aws/d/subnet_ids.html) data source to resolve the subnet ids in the VPC identified by `var.vpc_id`
+
+Hint: default VPC id for region is available on the EC2 Dashboard and prefixed with `vpc-`, e.g. `vpc-58a29221`
 
 ## Create Firewall Rules to Permit Access ##
 
-Create the following security groups:
+Create the following security groups, each name suffixed with `-${var.name}`:
  
 1. public-web - a security group that permits http and https access from the public Internet (tcp ports 80 & 443) 
 2. public-ssh - a security group that permits ssh access from the public Internet (tcp port 22)
 3. internal-web - a security group that permits http access only from sources in the VPC (tcp port 80) 
 4. outbound - a security group that permits access from the VPC to the Internet
 
-## Create an EC2 instance ##
+The 'public-web' security group should end up with a name like `public-web-jsmith`.  This namespacing pattern will avoid collisions with other students' for Security Groups and other resources.  
+
+## Create a KeyPair for use with EC2 ##
 
 Create an AWS Key Pair using an ssh keypair.
 
-Aside: how to generate an keypair `ssh-keygen -t rsa -f exercise.id_rsa` # do not specify a passphrase
+You may use an existing ssh key.
 
-Hint: Use the file function in Terraform [interpolation syntax](https://www.terraform.io/docs/configuration/interpolation.html)
+If you do not have an ssh keypair you can generate one with: `ssh-keygen -t rsa -f exercise.id_rsa` # do not specify a passphrase
+
+Use the `file` function in Terraform's [interpolation syntax](https://www.terraform.io/docs/configuration/interpolation.html) to read the file.
+If you used an existing key, it's easiest to copy the public key into this directory or use an absolute, fully-qualified path when reading it with the `file` function.
 
 Run `terraform plan`
 
@@ -87,21 +96,31 @@ Expected Result: `1 to add, 0 to change, 0 to destroy.`
 
 Run `terraform apply`
 
-Create one t2.medium EC2 instance using [Amazon ECS Optimized Linux](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
+## Create an EC2 instance managed by an Auto Scaling Group ##
+
+Define an Auto Scaling Group (ASG) using the [terraform-aws-modules/autoscaling/aws](https://github.com/terraform-aws-modules/terraform-aws-autoscaling) Terraform module, version `2.9.0`. 
+
+
+The ASG should create and maintain one t3.medium EC2 instance using [Amazon ECS Optimized Linux](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html)
 ami details:
 
-* ami id in us-west-2: ami-fad25980
-* name: amzn-ami-2018.03.d-amazon-ecs-optimized 
+* ami id in us-west-2: ami-01b70aea4161476b7
+* name: amzn-ami-2018.03.i-amazon-ecs-optimized 
 
 The EC2 instance should:
 
-* reference and use the generated keypair
-* be launched into one of the default vpc subnets
+* reference the generated keypair to permit logins
+* be launched into one of the default vpc subnets; hint: `vpc_zone_identifier = ["${data.aws_subnet_ids.default_vpc.ids}"]`
 * have a public IP
-* be publicly-accessible only via ssh
-* a tag of `Name=exercise-<yourname>`
+* be publicly-accessible _only_ via ssh
+* run the `nginx.yml.tpl` cloud-init script on startup
+* be tagged with
 
-Hint: `subnet_id = "${element(data.aws_subnet_ids.default_vpc.ids, 0)}"`
+    * `Name=exercise-<yourname>`
+    * `Environment=training`
+    * `WorkloadType=CuteButNamelessCow`
+
+Run `terraform plan` and `terraform apply`
 
 ### Digging Deeper ###
 
@@ -116,17 +135,22 @@ Find your the instance you just created and look at it in AWS EC2 console:
 
 ## Attach Security Groups to EC2 Instance ##
 
-Attach the public-ssh, internal-web, and outbound security groups to the ec2 instance.
+Attach the public-ssh, internal-web, and outbound security groups to the ec2 instances.
+
+Run `terraform plan` and `terraform apply`
 
 You should now be able to login to the instance via ssh with:
 `ssh -i ./exercise.id_rsa ec2-user@<public DNS>`
+
+That command assumes you generated a new ssh keypair, if you used an existing identity, you probably just need:
+`ssh ec2-user@<public DNS>`
 
 e.g.
 ```
 ssh -i ./exercise.id_rsa ec2-user@ec2-107-23-217-33.compute-1.amazonaws.com
 
    __|  __|  __|
-   _|  (   \__ \   Amazon ECS-Optimized Amazon Linux AMI 2018.03.d
+   _|  (   \__ \   Amazon ECS-Optimized Amazon Linux AMI 2018.03.i
  ____|\___|____/
 
 For documentation visit, http://aws.amazon.com/documentation/ecs
@@ -140,7 +164,7 @@ Reconfigure Terraform's state storage backend to use s3:
 terraform {
   backend "s3" {
     bucket     = "qm-training-cm-us-west-2"
-    key        = "infra/terraform/qm-sandbox/us-west-2/cm/exercise-<your name>.tfstate"
+    key        = "infra/terraform/qm-training/us-west-2/cm/exercise-<your name>.tfstate"
     region     = "us-west-2"
     encrypt    = true
     dynamodb_table = "TerraformStateLock"
@@ -180,7 +204,7 @@ Navigate to the `/counter` path on the ELB.  Is it counting?
 
 Consider that we might want to have multiple instances...
 
-Add the 'count' field to the `aws_instance` resource definition, set to 1.  Reference `count.index` in subnet lookup.
+Update the ASG's `desired_capacity` field 2.  Plan & Apply.
 
 
 # Local Development and Testing #
