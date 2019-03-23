@@ -120,14 +120,15 @@ locals {
   exercise_app_name = "exercise-${var.name}"
 }
 
-variable "app_server_public_key" {
-  description = "The SSH public key to launch the app server instances with, e.g. file('~/.ssh/id_rsa.pub')"
+variable "app_server_public_key_file" {
+  default     = "~/.ssh/id_rsa.pub"
+  description = "The SSH public key file to launch the app server instances with, e.g. '~/.ssh/id_rsa.pub'.  This will be read with file()"
   type        = "string"
 }
 
 resource "aws_key_pair" "exercise" {
   key_name   = "${local.exercise_app_name}"
-  public_key = "${var.app_server_public_key}"
+  public_key = "${file(var.app_server_public_key_file)}"
 }
 
 variable "db_pass" {
@@ -143,7 +144,8 @@ data "template_file" "init" {
 
   //uncomment db module address output once db instantiated
   vars {
-    //postgres_address = "${module.db.this_db_instance_address}"  //postgres_password = "${var.db_pass}"
+    //postgres_address = "${module.db.this_db_instance_address}"
+    //postgres_password = "${var.db_pass}"
   }
 }
 

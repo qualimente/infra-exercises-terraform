@@ -36,7 +36,7 @@ module "it_minimal" {
   name   = "${local.name}"
   vpc_id = "${data.aws_vpc.default.id}"
 
-  app_server_public_key = "${local_file.test_ssh_public_key.content}"
+  app_server_public_key_file = "${local_file.test_ssh_public_key.filename}"
 }
 
 variable "name" {

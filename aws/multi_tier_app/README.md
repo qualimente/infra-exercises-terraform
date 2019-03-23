@@ -35,7 +35,7 @@ Create a config.tf file with an AWS provider specified to use us-west-2
 
 Export environment variables for:
 
-* `AWS_DEFAULT_REGION=us-west-2`
+* `AWS_REGION=us-west-2`
 * `AWS_ACCESS_KEY_ID=<your api access key>`
 * `AWS_SECRET_ACCESS_KEY=<your secret access key>`
 
