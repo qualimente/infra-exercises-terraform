@@ -1,8 +1,4 @@
 // Instantiate a minimal version of the module for testing
-provider "aws" {
-  region = "us-west-2"
-}
-
 resource "random_id" "testing_suffix" {
   byte_length = 4
 }
@@ -15,12 +11,32 @@ data "aws_vpc" default {
   default = true
 }
 
+resource "tls_private_key" "test_minimal" {
+  algorithm = "RSA"
+}
+
+resource "local_file" "test_ssh_public_key" {
+  content  = "${tls_private_key.test_minimal.public_key_openssh}"
+  filename = "${path.module}/id_rsa.test_minimal.pub"
+}
+
+resource "local_file" "test_ssh_private_key" {
+  content  = "${tls_private_key.test_minimal.private_key_pem}"
+  filename = "${path.module}/id_rsa.test_minimal.pem"
+
+  provisioner "local-exec" {
+    command = "chmod 600 ${self.filename}"
+  }
+}
+
 module "it_minimal" {
   //instantiate multi_tier_app module for a minimal integration test
   source = "../../../"
 
   name   = "${local.name}"
   vpc_id = "${data.aws_vpc.default.id}"
+
+  app_server_public_key = "${local_file.test_ssh_public_key.content}"
 }
 
 variable "name" {

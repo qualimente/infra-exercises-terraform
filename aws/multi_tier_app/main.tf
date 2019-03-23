@@ -120,9 +120,14 @@ locals {
   exercise_app_name = "exercise-${var.name}"
 }
 
+variable "app_server_public_key" {
+  description = "The SSH public key to launch the app server instances with, e.g. file('~/.ssh/id_rsa.pub')"
+  type        = "string"
+}
+
 resource "aws_key_pair" "exercise" {
   key_name   = "${local.exercise_app_name}"
-  public_key = "${file("exercise.id_rsa.pub")}"
+  public_key = "${var.app_server_public_key}"
 }
 
 variable "db_pass" {
