@@ -123,11 +123,22 @@ locals {
 variable "app_server_public_key" {
   description = "The SSH public key to launch the app server instances with, e.g. file('~/.ssh/id_rsa.pub')"
   type        = "string"
+  default     = ""
+}
+
+variable "app_server_public_key_file" {
+  description = "The file containing the SSH public key to launch the app server instances with, e.g. '~/.ssh/id_rsa.pub'"
+  type        = "string"
+  default     = ""
+}
+
+locals {
+  app_server_public_key_content = "${var.app_server_public_key != "" ? var.app_server_public_key : file(var.app_server_public_key_file)}"
 }
 
 resource "aws_key_pair" "exercise" {
   key_name   = "${local.exercise_app_name}"
-  public_key = "${var.app_server_public_key}"
+  public_key = "${local.app_server_public_key_content}"
 }
 
 variable "db_pass" {

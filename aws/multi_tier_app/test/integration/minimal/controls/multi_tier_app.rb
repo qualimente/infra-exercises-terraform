@@ -15,6 +15,7 @@ Awsecrets.load()
 # starter_instance_arn = attribute 'starter.instance_arn', {}
 name = attribute 'multi_tier_app.name', {}
 app_asg_name = attribute 'multi_tier_app.app.asg.name', {}
+app_asg_key_file_name = attribute 'multi_tier_app.app.asg_key_file.name', {}
 
 expect_owner = name
 expect_env = 'training'
@@ -48,5 +49,17 @@ control 'multi_tier_app' do
     it { should have_tag('WorkloadType').value('CuteButNamelessCow') }
 
   end
-  
+
+  describe "App Autoscaling Group #{app_asg_key_file_name}" do
+    subject { autoscaling_group(app_asg_key_file_name) }
+
+    it { should exist }
+
+    it { should have_tag('Name').value("exercise-#{name}") }
+    it { should have_tag('Owner').value(expect_owner) }
+    it { should have_tag('Environment').value(expect_env) }
+    it { should have_tag('WorkloadType').value('CuteButNamelessCow') }
+
+  end
+
 end

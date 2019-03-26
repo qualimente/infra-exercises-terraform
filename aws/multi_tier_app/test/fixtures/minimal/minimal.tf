@@ -39,6 +39,19 @@ module "it_minimal" {
   app_server_public_key = "${local_file.test_ssh_public_key.content}"
 }
 
+module "it_minimal_from_file" {
+  //instantiate multi_tier_app module for a minimal integration test
+  source = "../../../"
+
+  name   = "${local.name}-key-file"
+  vpc_id = "${data.aws_vpc.default.id}"
+
+  #app_server_public_key_file = "/Users/skuenzli/.ssh/id_rsa.pub"
+  #app_server_public_key_file = "${local_file.test_ssh_public_key.filename}"
+  #app_server_public_key_file = "${path.module}/id_rsa.test_minimal.pub"
+  app_server_public_key_file = "/module/test/fixtures/minimal/id_rsa.test_minimal.pub"
+}
+
 variable "name" {
   type = "string"
 }
@@ -66,4 +79,8 @@ output "multi_tier_app.app.asg.name" {
 output "terraform_state" {
   description = "The path to the Terraform state file; used in the state_file control"
   value       = "${path.cwd}/terraform.tfstate.d/${terraform.workspace}/terraform.tfstate"
+}
+
+output "multi_tier_app.app.asg_key_file.name" {
+  value = "${module.it_minimal_from_file.app.asg.name}"
 }
